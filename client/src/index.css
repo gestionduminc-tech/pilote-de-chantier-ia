@@ -181,3 +181,90 @@
     }
   }
 }
+
+/* ============================================================
+   Animations — fade-up / slide-up + stagger
+   ============================================================
+   Deux modes :
+   1. .fade-up + .is-visible  — piloté par JS (IntersectionObserver)
+   2. .animate-slide-up       — animation CSS pure, sans JS
+   ============================================================ */
+
+@keyframes slide-up-fade {
+  from {
+    opacity: 0;
+    transform: translateY(2rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Variables d'animation — surchargeable localement via style="--anim-delay: 200ms" */
+:root {
+  --anim-duration: 0.6s;
+  --anim-ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@layer utilities {
+  /* ----------------------------------------------------------------
+     Mode 1 : JS-driven
+     Ajoutez .is-visible via IntersectionObserver pour déclencher.
+     Usage : <div class="fade-up [stagger-N]"> puis JS ajoute .is-visible
+     ---------------------------------------------------------------- */
+  .fade-up {
+    opacity: 0;
+    transform: translateY(2rem);
+    transition:
+      opacity var(--anim-duration) var(--anim-ease),
+      transform var(--anim-duration) var(--anim-ease);
+    transition-delay: var(--anim-delay, 0ms);
+  }
+
+  .fade-up.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ----------------------------------------------------------------
+     Délais en cascade (stagger)
+     Usage : <div class="fade-up stagger-2 is-visible">
+     ---------------------------------------------------------------- */
+  .stagger-1 { --anim-delay: 100ms; }
+  .stagger-2 { --anim-delay: 200ms; }
+  .stagger-3 { --anim-delay: 300ms; }
+  .stagger-4 { --anim-delay: 400ms; }
+  .stagger-5 { --anim-delay: 500ms; }
+
+  /* ----------------------------------------------------------------
+     Mode 2 : CSS pur, sans JS
+     L'animation se joue au premier rendu (chargement ou entrée en vue).
+     Usage : <div class="animate-slide-up [stagger-N]">
+     ---------------------------------------------------------------- */
+  .animate-slide-up {
+    animation: slide-up-fade var(--anim-duration) var(--anim-ease) both;
+    animation-delay: var(--anim-delay, 0ms);
+  }
+}
+
+/* ----------------------------------------------------------------
+   prefers-reduced-motion
+   Désactive toutes les animations et transitions définies ci-dessus.
+   Règles unlayered → priorité sur les règles en @layer utilities.
+   ---------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --anim-duration: 0.01ms; /* imperceptible mais préserve les callbacks JS */
+  }
+
+  .fade-up {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .animate-slide-up {
+    animation: none;
+  }
+}
